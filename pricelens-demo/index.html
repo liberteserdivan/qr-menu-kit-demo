@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PriceLens – Supplier Invoice Checker · Free Demo</title>
+<style>
+:root{--ink:#14213d;--muted:#5b6475;--bg:#f5f6f8;--card:#fff;--line:#e3e6eb;--brand:#1f6feb;--brand-ink:#fff;--ok:#1a7f37;--warn:#b35900;--bad:#c62828;--chip:#eef2f7}
+@media (prefers-color-scheme:dark){:root{--ink:#e6e9ef;--muted:#9aa3b2;--bg:#0f141b;--card:#171d26;--line:#2a3340;--brand:#4c8dff;--chip:#222b37;--ok:#3fb950;--warn:#e3a14a;--bad:#ff6b6b}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--ink);color:#fff;padding:18px 20px}@media (prefers-color-scheme:dark){header{background:#0a0e13;border-bottom:1px solid var(--line)}}
+header .wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.logo{width:34px;height:34px;border-radius:9px;background:var(--brand);display:grid;place-items:center;font-weight:800}
+h1{font-size:20px;margin:0}header p{margin:0;color:#c9d1dd;font-size:13px}
+.wrap{max-width:1180px;margin:auto;padding:0 16px}main .wrap{padding:20px 16px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+h2{font-size:17px;margin:0 0 12px}h3{font-size:15px;margin:0 0 8px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:12px;background:var(--bg)}.drop.loaded{border-style:solid;border-color:var(--ok)}
+.drop label{font-weight:650;display:block}.drop small{color:var(--muted);display:block;margin:2px 0 8px}.drop .st{font-size:13px;color:var(--ok)}
+input[type=file]{max-width:100%;font-size:13px}
+button,.btn{background:var(--brand);color:var(--brand-ink);border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:650;cursor:pointer;text-decoration:none;display:inline-block}
+button.sec{background:var(--chip);color:var(--ink)}button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+select,input[type=number],input[type=text]{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit}
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi b{display:block;font-size:24px}.kpi span{color:var(--muted);font-size:13px}.kpi.claim b{color:var(--ok)}.kpi.rev b{color:var(--warn)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}.tbl th,.tbl td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}.tbl th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+.tbl td.num{text-align:right;white-space:nowrap}.scroll{overflow-x:auto}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:650;white-space:nowrap}.p-confirmed{background:#dff3e4;color:#14532d}.p-review{background:#fff1d6;color:#7a4100}.p-info{background:var(--chip);color:var(--muted)}
+textarea{width:100%;min-height:260px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px;font:13px/1.5 ui-monospace,Consolas,monospace}
+.muted{color:var(--muted)}.note{font-size:13px;color:var(--muted)}.hidden{display:none}
+.banner{background:#fff1d6;color:#5a3300;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:14px}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="logo">PL</div><div><h1>PriceLens – Supplier Invoice Checker · Free Demo</h1><p>Check supplier invoices against agreed prices, deliveries and credits. Runs offline – your data never leaves this computer.</p></div></div></header>
+<main><div class="wrap">
+<div class="banner"><b>Free demo with sample data.</b> The full version imports your own CSV files, exports Excel/CSV reports and drafts dispute emails. <a href="https://oddlylittlestudio.gumroad.com/l/pricelens">Get PriceLens</a></div>
+<section class="card" id="importCard">
+  <h2>1 · Load your data</h2>
+  <p class="note">CSV files (comma or semicolon). Only the price list and invoices are required. Download the templates to see the columns.</p>
+  <div class="grid" id="drops"></div>
+  <div class="row" style="margin-top:14px">
+    <button id="runBtn">Check invoices</button>
+    <button class="sec" id="sampleBtn">Load sample data</button>
+    <button class="sec" id="tplBtn">Download CSV templates</button>
+    <button class="sec" id="clearBtn">Clear</button>
+  </div>
+  <details style="margin-top:12px"><summary>Settings</summary>
+    <div class="row" style="margin-top:10px">
+      <label>Currency <select id="currency"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option><option>TRY</option></select></label>
+      <label>Price tolerance % <input type="number" id="tol" value="0.5" min="0" step="0.1" style="width:80px"></label>
+      <label><input type="checkbox" id="dc"> Decimal comma (1,25)</label>
+    </div>
+  </details>
+</section>
+
+<section id="results" class="hidden">
+  <div class="kpis">
+    <div class="kpi claim"><b id="kClaim">–</b><span>Confirmed credit to request</span></div>
+    <div class="kpi rev"><b id="kRev">–</b><span>Needs your review (not counted)</span></div>
+    <div class="kpi"><b id="kLines">–</b><span>Invoice lines checked</span></div>
+    <div class="kpi"><b id="kIssues">–</b><span>Issues found</span></div>
+  </div>
+  <p class="note">Confirmed amounts are calculated only when the price list, units and quantities are complete. Items marked <span class="pill p-review">review</span> need your check; tick “I confirm” to add them to the claim.</p>
+
+  <section class="card"><h2>2 · Supplier report</h2><div class="scroll"><table class="tbl" id="supTbl"></table></div></section>
+
+  <section class="card"><h2>3 · Issues</h2>
+    <div class="row" style="margin-bottom:10px">
+      <select id="fStatus"><option value="">All statuses</option><option value="confirmed">Confirmed</option><option value="review">Needs review</option><option value="info">Info</option></select>
+      <select id="fSup"><option value="">All suppliers</option></select>
+      <button class="sec" id="csvBtn">Export CSV</button><button class="sec" id="xlsxBtn">Export Excel (.xlsx)</button>
+    </div>
+    <div class="scroll"><table class="tbl" id="issTbl"></table></div>
+  </section>
+
+  <section class="card"><h2>4 · Dispute email</h2>
+    <div class="row" style="margin-bottom:10px">
+      <select id="eSup"></select>
+      <input type="text" id="eBiz" placeholder="Your business name">
+      <input type="text" id="eName" placeholder="Your name">
+      <button class="sec" id="copyBtn">Copy</button>
+    </div>
+    <textarea id="email" spellcheck="false"></textarea>
+    <p class="note">Review the draft before sending. PriceLens never sends email.</p>
+  </section>
+</section>
+</div></main>
+<footer>PriceLens v1.0 · Offline tool · Results are a checking aid, not accounting or legal advice. Verify each item against your documents before you request a credit.</footer>
+
+<script>
+/* PriceLens – Supplier Invoice Checker · check engine v1.0
+   Pure functions, no network. Used by the HTML app (inlined) and by Node tests. */
+(function (root) {
+  'use strict';
+
+  // ---------- CSV ----------
+  function detectDelimiter(text) {
+    const first = text.split(/\r?\n/).find(l => l.trim()) || '';
+    const counts = { ',': 0, ';': 0, '\t': 0 };
+    let q = false;
+    for (const ch of first) { if (ch === '"') q = !q; else if (!q && ch in counts) counts[ch]++; }
+    return Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || ',';
+  }
+  function parseCSV(text) {
+    text = String(text || '').replace(/^﻿/, '');
+    const d = detectDelimiter(text);
+    const rows = []; let row = [], f = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; }
+        else f += c;
+      } else if (c === '"') q = true;
+      else if (c === d) { row.push(f); f = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(f); f = ''; if (row.some(x => x.trim() !== '')) rows.push(row); row = [];
+      } else f += c;
+    }
+    row.push(f); if (row.some(x => x.trim() !== '')) rows.push(row);
+    if (!rows.length) return { rows: [], delimiter: d };
+    const head = rows[0].map(h => h.trim().toLowerCase().replace(/[\s\-]+/g, '_'));
+    return {
+      delimiter: d,
+      rows: rows.slice(1).map(r => { const o = {}; head.forEach((h, i) => { o[h] = (r[i] ?? '').trim(); }); return o; })
+    };
+  }
+  function toCSV(rows, cols) {
+    const esc = v => { const s = v == null ? '' : String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    return [cols.join(',')].concat(rows.map(r => cols.map(c => esc(r[c])).join(','))).join('\r\n');
+  }
+
+  // ---------- helpers ----------
+  function num(v, decimalComma) {
+    if (v == null) return null;
+    let s = String(v).trim().replace(/[^\d.,\-]/g, '');
+    if (s === '' || s === '-') return null;
+    if (decimalComma) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/,\d{1,2}$/.test(s) && !/\./.test(s)) s = s.replace(',', '.');
+    else s = s.replace(/,/g, '');
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+  function bool(v) { return /^(y|yes|true|1|incl|inc|included|gross)$/i.test(String(v || '').trim()); }
+  const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+  const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const key = (sup, sku) => norm(sup) + '|' + norm(sku);
+
+  // unit -> [dimension, factor to base]
+  const UNITS = {
+    each: ['count', 1], ea: ['count', 1], pc: ['count', 1], pcs: ['count', 1], unit: ['count', 1], piece: ['count', 1],
+    kg: ['mass', 1], g: ['mass', 0.001], gram: ['mass', 0.001], lb: ['mass', 0.45359237],
+    l: ['volume', 1], lt: ['volume', 1], litre: ['volume', 1], liter: ['volume', 1], ml: ['volume', 0.001], cl: ['volume', 0.01]
+  };
+  const BASE_OF = { count: 'each', mass: 'kg', volume: 'L' };
+  function unitInfo(u) { return UNITS[String(u || '').trim().toLowerCase()] || null; }
+  function isPackUnit(u) { return /^(case|cs|box|ctn|carton|pack|pk|tray|crate)$/i.test(String(u || '').trim()); }
+  function isCase(u) { return /^(case|cs|box|ctn|carton|crate)$/i.test(String(u || '').trim()); }
+
+  /** Converts qty in `unit` to the item's base unit. Returns {value} or {error}. */
+  function toBase(qty, unit, item) {
+    if (qty == null) return { error: 'missing quantity' };
+    const baseU = unitInfo(item.base_unit);
+    if (!baseU) return { error: 'price list base unit missing or unknown' };
+    if (isPackUnit(unit)) {
+      const size = isCase(unit) ? item.case_size : item.pack_size;
+      if (!size) return { error: `"${unit}" used but ${isCase(unit) ? 'case_size' : 'pack_size'} missing in price list` };
+      return { value: qty * size };
+    }
+    const u = unitInfo(unit || item.base_unit);
+    if (!u) return { error: `unknown unit "${unit}"` };
+    // "each" of a bottle/sack/block whose content is measured in kg or L: pack_size = content per each
+    if (u[0] === 'count' && baseU[0] !== 'count') {
+      if (!item.pack_size) return { error: `"${unit}" used but pack_size (content per ${unit}) missing in price list` };
+      return { value: qty * item.pack_size };
+    }
+    if (u[0] !== baseU[0]) return { error: `unit "${unit}" cannot be converted to ${BASE_OF[baseU[0]]}` };
+    return { value: qty * u[1] / baseU[1] };
+  }
+  function netPrice(price, inclVat, vatRate) {
+    if (price == null) return null;
+    if (!inclVat) return price;
+    if (vatRate == null) return null;
+    return price / (1 + vatRate / 100);
+  }
+
+  // ---------- normalisation ----------
+  function prepPriceList(rows, opt) {
+    return rows.map((r, i) => ({
+      row: i + 2, supplier: r.supplier, sku: r.sku || '', description: r.description || r.item || '',
+      unit: r.unit || r.base_unit, base_unit: r.base_unit || r.unit,
+      case_size: num(r.case_size, opt.decimalComma), pack_size: num(r.pack_size, opt.decimalComma),
+      price: num(r.price ?? r.agreed_price, opt.decimalComma),
+      incl: bool(r.price_includes_vat ?? r.vat_included),
+      vat: num(r.vat_rate, opt.decimalComma),
+      valid_from: r.valid_from || '', valid_to: r.valid_to || ''
+    }));
+  }
+  function prepInvoices(rows, opt) {
+    return rows.map((r, i) => ({
+      row: i + 2, supplier: r.supplier, invoice_no: r.invoice_no || r.invoice || '', date: r.invoice_date || r.date || '',
+      sku: r.sku || '', description: r.description || r.item || '',
+      qty: num(r.qty ?? r.quantity, opt.decimalComma), unit: r.unit || '',
+      unit_price: num(r.unit_price ?? r.price, opt.decimalComma),
+      incl: bool(r.price_includes_vat ?? r.vat_included), vat: num(r.vat_rate, opt.decimalComma),
+      line_total: num(r.line_total ?? r.total, opt.decimalComma)
+    }));
+  }
+
+  // ---------- main ----------
+  /**
+   * data: {priceList, invoices, orders?, deliveries?, returns?, credits?} arrays of row objects (from parseCSV)
+   * opt: {tolerancePct=0.5, minDiff=0.01, decimalComma=false, currency='USD'}
+   */
+  function analyze(data, opt) {
+    opt = Object.assign({ tolerancePct: 0.5, minDiff: 0.01, decimalComma: false, currency: 'USD' }, opt || {});
+    const pl = prepPriceList(data.priceList || [], opt);
+    const inv = prepInvoices(data.invoices || [], opt);
+    const issues = [];
+    const add = (o) => issues.push(Object.assign({ amount: null, status: 'review' }, o));
+
+    // price list index (warn on conflicting duplicates)
+    const bySku = new Map(), byDesc = new Map();
+    for (const p of pl) {
+      if (p.sku) {
+        const k = key(p.supplier, p.sku);
+        if (bySku.has(k) && bySku.get(k).price !== p.price) add({ type: 'Price list conflict', supplier: p.supplier, sku: p.sku, description: p.description, detail: `SKU listed twice with different prices (rows ${bySku.get(k).row} and ${p.row}). Fix the price list.` });
+        else bySku.set(k, p);
+      }
+      const dk = norm(p.supplier) + '|' + norm(p.description);
+      if (!byDesc.has(dk)) byDesc.set(dk, []);
+      byDesc.get(dk).push(p);
+    }
+    function inDate(p, d) { return (!p.valid_from || !d || d >= p.valid_from) && (!p.valid_to || !d || d <= p.valid_to); }
+    function match(line) {
+      if (line.sku) {
+        const p = bySku.get(key(line.supplier, line.sku));
+        if (p) return { item: p, confidence: 'exact' };
+      }
+      const cands = (byDesc.get(norm(line.supplier) + '|' + norm(line.description)) || []);
+      if (cands.length === 1) return { item: cands[0], confidence: 'description' };
+      if (cands.length > 1) return { item: null, confidence: 'ambiguous' };
+      // loose: all words of the shorter name contained in the other, same supplier
+      const words = norm(line.description).split(' ').filter(w => w.length > 2);
+      const loose = pl.filter(p => norm(p.supplier) === norm(line.supplier) && words.length && words.every(w => norm(p.description).includes(w)));
+      if (loose.length === 1) return { item: loose[0], confidence: 'fuzzy' };
+      return { item: null, confidence: loose.length > 1 ? 'ambiguous' : 'none' };
+    }
+
+    const lineInfo = [];
+    for (const l of inv) {
+      const base = { supplier: l.supplier, invoice_no: l.invoice_no, sku: l.sku, description: l.description, row: l.row };
+      const info = { line: l, item: null, qtyBase: null, netPerBase: null };
+      lineInfo.push(info);
+
+      // arithmetic check (independent of price list)
+      if (l.qty != null && l.unit_price != null && l.line_total != null) {
+        const diff = l.line_total - l.qty * l.unit_price;
+        if (Math.abs(diff) > Math.max(opt.minDiff, 0.005)) {
+          const amtNet = netPrice(diff, l.incl, l.vat);
+          add(Object.assign({}, base, { type: 'Line total error', status: diff > 0 && amtNet != null ? 'confirmed' : (diff > 0 ? 'review' : 'info'), amount: diff > 0 && amtNet != null ? r2(amtNet) : null, potential: diff > 0 ? r2(diff) : null,
+            detail: `Line total ${l.line_total.toFixed(2)} ≠ qty ${l.qty} × ${l.unit_price.toFixed(2)} = ${(l.qty * l.unit_price).toFixed(2)}${l.incl ? ' (VAT-inclusive; claim shown net of VAT)' : ''}.` }));
+        }
+      }
+
+      const m = match(l);
+      if (!m.item) {
+        add(Object.assign({}, base, { type: m.confidence === 'ambiguous' ? 'Ambiguous match' : 'Not in price list', detail: m.confidence === 'ambiguous' ? 'Several price-list items could match. Confirm the product or add the SKU.' : 'No agreed price found for this item. Add it to the price list if a price was agreed.' }));
+        continue;
+      }
+      const p = m.item; info.item = p;
+      if (m.confidence !== 'exact') add(Object.assign({}, base, { type: 'Match needs confirmation', detail: `Matched to "${p.description}"${p.sku ? ' (' + p.sku + ')' : ''} by ${m.confidence === 'fuzzy' ? 'similar name' : 'name only'}. Confirm before claiming.` }));
+      if (!inDate(p, l.date)) add(Object.assign({}, base, { type: 'Price outside validity', detail: `Agreed price valid ${p.valid_from || '…'} to ${p.valid_to || '…'}; invoice dated ${l.date}. Check the current agreement.` }));
+
+      if (l.vat != null && p.vat != null && l.vat !== p.vat) add(Object.assign({}, base, { type: 'VAT rate differs', detail: `Invoice VAT ${l.vat}% vs price list ${p.vat}%. Check which rate applies.` }));
+
+      const qb = toBase(l.qty, l.unit || p.unit, p);
+      const agreedUnit = toBase(1, p.unit, p);
+      const invNet = netPrice(l.unit_price, l.incl, l.vat ?? p.vat);
+      const agreedNet = netPrice(p.price, p.incl, p.vat);
+      const missing = [];
+      if (qb.error) missing.push(qb.error);
+      if (agreedUnit.error) missing.push(agreedUnit.error);
+      if (invNet == null) missing.push(l.unit_price == null ? 'missing invoice unit price' : 'VAT rate missing for VAT-inclusive invoice price');
+      if (agreedNet == null) missing.push(p.price == null ? 'missing agreed price' : 'VAT rate missing for VAT-inclusive agreed price');
+      const perInvUnit = toBase(1, l.unit || p.unit, p);
+      if (perInvUnit.error && !missing.includes(perInvUnit.error)) missing.push(perInvUnit.error);
+      if (missing.length) { add(Object.assign({}, base, { type: 'Incomplete data', detail: 'Cannot check price: ' + missing.join('; ') + '. No amount calculated.' })); continue; }
+
+      info.qtyBase = qb.value;
+      const invPerBase = invNet / perInvUnit.value;
+      const agreedPerBase = agreedNet / agreedUnit.value;
+      info.netPerBase = invPerBase; info.agreedPerBase = agreedPerBase;
+      const diffPerBase = invPerBase - agreedPerBase;
+      const over = diffPerBase * qb.value;
+      const pct = agreedPerBase ? diffPerBase / agreedPerBase * 100 : 0;
+      if (diffPerBase > 0 && pct > opt.tolerancePct && over >= opt.minDiff) {
+        if (m.confidence === 'exact') info.priceClaimed = true;
+        const bu = BASE_OF[unitInfo(p.base_unit)[0]];
+        add(Object.assign({}, base, { type: 'Price above agreed', status: m.confidence === 'exact' ? 'confirmed' : 'review',
+          amount: m.confidence === 'exact' ? r2(over) : null, potential: r2(over),
+          detail: `Billed ${invPerBase.toFixed(4)} per ${bu} (net) vs agreed ${agreedPerBase.toFixed(4)} (+${pct.toFixed(1)}%) on ${+qb.value.toFixed(3)} ${bu}.` }));
+      } else if (diffPerBase < 0 && -pct > opt.tolerancePct) {
+        add(Object.assign({}, base, { type: 'Price below agreed', status: 'info', detail: `Billed ${pct.toFixed(1)}% below the agreed price. No action needed.` }));
+      }
+    }
+
+    // ---------- quantity: orders & deliveries ----------
+    function qtyMap(rows, field) {
+      const m = new Map();
+      for (const r of rows || []) {
+        const k = norm(r.supplier) + '|' + norm(r.invoice_no || r.po || r.order_no) + '|' + norm(r.sku);
+        const q = num(r[field] ?? r.qty ?? r.quantity, opt.decimalComma);
+        const prev = m.get(k);
+        m.set(k, { qty: (prev ? prev.qty : 0) + (q ?? NaN), unit: r.unit || (prev && prev.unit) || '' });
+      }
+      return m;
+    }
+    const delivered = qtyMap(data.deliveries, 'delivered_qty');
+    const ordered = qtyMap(data.orders, 'ordered_qty');
+    const billed = new Map();
+    for (const info of lineInfo) {
+      const l = info.line; if (!info.item || info.qtyBase == null) continue;
+      const k = norm(l.supplier) + '|' + norm(l.invoice_no) + '|' + norm(l.sku || info.item.sku);
+      const b = billed.get(k) || { qtyBase: 0, info };
+      b.qtyBase += info.qtyBase; billed.set(k, b);
+    }
+    for (const [k, b] of billed) {
+      const l = b.info.line, p = b.info.item, bu = BASE_OF[unitInfo(p.base_unit)[0]];
+      const base = { supplier: l.supplier, invoice_no: l.invoice_no, sku: l.sku || p.sku, description: l.description };
+      if (delivered.has(k)) {
+        const d = delivered.get(k); const db = Number.isNaN(d.qty) ? { error: 'missing delivered quantity' } : toBase(d.qty, d.unit || p.unit, p);
+        if (db.error) add(Object.assign({}, base, { type: 'Incomplete data', detail: 'Cannot check delivery: ' + db.error + '. No amount calculated.' }));
+        else if (b.qtyBase - db.value > 1e-9) {
+          const short = b.qtyBase - db.value;
+          add(Object.assign({}, base, { type: 'Billed more than delivered', status: 'confirmed', amount: r2(short * (b.info.priceClaimed ? b.info.agreedPerBase : b.info.netPerBase)),
+            detail: `Billed ${+b.qtyBase.toFixed(3)} ${bu}, delivery record shows ${+db.value.toFixed(3)} ${bu} (short ${+short.toFixed(3)}).` }));
+        }
+      } else if (ordered.has(k)) {
+        const o = ordered.get(k); const ob = Number.isNaN(o.qty) ? { error: 'missing ordered quantity' } : toBase(o.qty, o.unit || p.unit, p);
+        if (!ob.error && b.qtyBase - ob.value > 1e-9) add(Object.assign({}, base, { type: 'Billed more than ordered', potential: r2((b.qtyBase - ob.value) * b.info.netPerBase),
+          detail: `Billed ${+b.qtyBase.toFixed(3)} ${bu}, ordered ${+ob.value.toFixed(3)} ${bu}. No delivery record, so confirm what arrived before claiming.` }));
+      }
+    }
+
+    // ---------- returns vs credit notes ----------
+    const credits = (data.credits || []).map(c => ({ supplier: c.supplier, invoice_no: c.invoice_no, sku: c.sku, amount: num(c.amount ?? c.credit_amount, opt.decimalComma), credit_no: c.credit_no || c.credit_note || '' }));
+    const usedCredit = new Set();
+    for (const r of data.returns || []) {
+      const base = { supplier: r.supplier, invoice_no: r.invoice_no, sku: r.sku, description: r.description || '' };
+      const p = bySku.get(key(r.supplier, r.sku));
+      const q = num(r.returned_qty ?? r.qty, opt.decimalComma);
+      const matches = credits.map((c, i) => [c, i]).filter(([c, i]) => !usedCredit.has(i) && norm(c.supplier) === norm(r.supplier) && norm(c.invoice_no) === norm(r.invoice_no) && norm(c.sku) === norm(r.sku));
+      const got = matches.reduce((s, [c]) => s + (c.amount || 0), 0);
+      matches.forEach(([, i]) => usedCredit.add(i));
+      // expected value: price actually billed on that invoice line, else agreed price
+      const li = lineInfo.find(x => x.item && norm(x.line.supplier) === norm(r.supplier) && norm(x.line.invoice_no) === norm(r.invoice_no) && norm(x.line.sku || x.item.sku) === norm(r.sku) && x.netPerBase != null);
+      let expected = null, why = '';
+      if (!p) why = 'returned item not in price list';
+      else if (q == null) why = 'missing returned quantity';
+      else {
+        const qb = toBase(q, r.unit || p.unit, p);
+        if (qb.error) why = qb.error;
+        else if (li) expected = qb.value * li.netPerBase;
+        else { const au = toBase(1, p.unit, p), an = netPrice(p.price, p.incl, p.vat); if (au.error || an == null) why = 'agreed price incomplete'; else expected = qb.value * an / au.value; }
+      }
+      if (expected == null) { add(Object.assign({}, base, { type: 'Incomplete data', detail: `Cannot value return: ${why}. No amount calculated.` })); continue; }
+      const gap = expected - got;
+      if (gap > opt.minDiff) add(Object.assign({}, base, { type: matches.length ? 'Credit note short' : 'Missing credit note', status: 'confirmed', amount: r2(gap),
+        detail: matches.length ? `Return worth ${expected.toFixed(2)} (net); credited ${got.toFixed(2)}.` : `Return worth ${expected.toFixed(2)} (net) has no credit note.` }));
+    }
+
+    // ---------- duplicates ----------
+    const invGroups = new Map();
+    for (const l of inv) {
+      const k = norm(l.supplier) + '|' + norm(l.invoice_no);
+      if (!invGroups.has(k)) invGroups.set(k, { supplier: l.supplier, invoice_no: l.invoice_no, date: l.date, lines: [] });
+      invGroups.get(k).lines.push(l);
+    }
+    const fp = g => g.lines.map(l => [norm(l.sku || l.description), l.qty, l.unit_price].join(':')).sort().join(';');
+    const total = g => g.lines.reduce((s, l) => s + (l.line_total ?? ((l.qty ?? 0) * (l.unit_price ?? 0))), 0);
+    for (const g of invGroups.values()) {
+      const seen = new Map();
+      for (const l of g.lines) {
+        const k = [norm(l.sku || l.description), l.qty, l.unit_price, norm(l.unit)].join(':');
+        if (seen.has(k)) add({ supplier: g.supplier, invoice_no: g.invoice_no, sku: l.sku, description: l.description, type: 'Repeated line', potential: r2(l.line_total ?? (l.qty * l.unit_price)), detail: `Same item, quantity and price appear more than once on invoice ${g.invoice_no}. Confirm it was ordered twice.` });
+        else seen.set(k, 1);
+      }
+    }
+    const groups = [...invGroups.values()];
+    for (let i = 0; i < groups.length; i++) for (let j = i + 1; j < groups.length; j++) {
+      const a = groups[i], b = groups[j];
+      if (norm(a.supplier) !== norm(b.supplier)) continue;
+      const sameNo = norm(a.invoice_no).replace(/^0+/, '') === norm(b.invoice_no).replace(/^0+/, '');
+      if (sameNo || (fp(a) === fp(b) && Math.abs(total(a) - total(b)) < 0.005)) {
+        add({ supplier: b.supplier, invoice_no: b.invoice_no, sku: '', description: '', type: 'Possible duplicate invoice', potential: r2(total(b)),
+          detail: `Invoice ${b.invoice_no}${b.date ? ' (' + b.date + ')' : ''} matches invoice ${a.invoice_no}${a.date ? ' (' + a.date + ')' : ''}: ${sameNo ? 'same number' : 'same lines and total'}. Confirm it was not paid twice.` });
+      }
+    }
+
+    // ---------- summary ----------
+    const suppliers = {};
+    for (const it of issues) {
+      const s = suppliers[it.supplier] || (suppliers[it.supplier] = { supplier: it.supplier, confirmed: 0, review: 0, reviewPotential: 0, info: 0, claimTotal: 0 });
+      if (it.status === 'confirmed') { s.confirmed++; s.claimTotal = r2(s.claimTotal + (it.amount || 0)); }
+      else if (it.status === 'review') { s.review++; s.reviewPotential = r2(s.reviewPotential + (it.potential || 0)); }
+      else s.info++;
+    }
+    const supplierList = Object.values(suppliers).sort((a, b) => b.claimTotal - a.claimTotal);
+    return {
+      issues, suppliers: supplierList,
+      totals: {
+        claim: r2(supplierList.reduce((s, x) => s + x.claimTotal, 0)),
+        reviewPotential: r2(supplierList.reduce((s, x) => s + x.reviewPotential, 0)),
+        confirmed: issues.filter(i => i.status === 'confirmed').length,
+        review: issues.filter(i => i.status === 'review').length,
+        linesChecked: inv.length, invoices: invGroups.size
+      },
+      currency: opt.currency
+    };
+  }
+
+  function disputeEmail(result, supplier, o) {
+    o = Object.assign({ business: '[Your business name]', contact: '[Your name]', currency: result.currency || 'USD' }, o || {});
+    const conf = result.issues.filter(i => i.supplier === supplier && i.status === 'confirmed');
+    const rev = result.issues.filter(i => i.supplier === supplier && i.status === 'review' && /duplicate|Repeated|ordered/i.test(i.type));
+    if (!conf.length && !rev.length) return '';
+    const money = v => o.currency + ' ' + v.toFixed(2);
+    const total = r2(conf.reduce((s, i) => s + i.amount, 0));
+    const lines = [];
+    lines.push(`Subject: Invoice discrepancies – request for credit${conf.length ? ' (' + money(total) + ')' : ''}`, '', `Hello ${supplier} team,`, '',
+      `We reviewed recent invoices against our agreed prices, delivery records and returns. ${conf.length ? 'We found the following differences and ask for a credit note:' : 'We would like to confirm a few points:'}`, '');
+    conf.forEach((i, n) => lines.push(`${n + 1}. Invoice ${i.invoice_no}${i.sku ? ', item ' + i.sku : ''}${i.description ? ' (' + i.description + ')' : ''} – ${i.type}: ${i.detail} Amount: ${money(i.amount)}.`));
+    if (conf.length) lines.push('', `Total requested credit: ${money(total)} (excluding VAT unless stated).`);
+    if (rev.length) { lines.push('', 'Please also confirm:'); rev.forEach(i => lines.push(`- Invoice ${i.invoice_no}: ${i.detail}`)); }
+    lines.push('', 'Please send a credit note or let us know if your records differ. We can share the order and delivery documents.', '', 'Thank you,', o.contact, o.business);
+    return lines.join('\n');
+  }
+
+  const ISSUE_COLS = ['status', 'type', 'supplier', 'invoice_no', 'sku', 'description', 'amount', 'potential', 'detail'];
+  const api = { parseCSV, toCSV, analyze, disputeEmail, toBase, num, ISSUE_COLS, version: '1.0.0' };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.PriceLens = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+const DEMO = true;
+const SAMPLE = {"priceList":"supplier,sku,description,unit,base_unit,case_size,pack_size,price,price_includes_vat,vat_rate,valid_from,valid_to\nGreen Valley Produce,GV-TOM,Vine tomatoes,kg,kg,,,2.40,no,0,2026-01-01,2026-12-31\nGreen Valley Produce,GV-ONI,Red onions,kg,kg,,,1.10,no,0,2026-01-01,2026-12-31\nGreen Valley Produce,GV-LET,Romaine lettuce,case,each,12,,14.40,no,0,2026-01-01,2026-12-31\nHarbor Dairy Co,HD-MLK,Whole milk 1L,case,L,12,,13.20,no,0,,\nHarbor Dairy Co,HD-CHD,Cheddar slices,kg,kg,,,11.50,no,0,,\nHarbor Dairy Co,HD-BTR,Butter 250g,each,kg,,0.25,2.10,no,0,,\nNorthside Meats,NM-PAT,Beef patties 150g,case,each,48,,57.60,no,0,,\nNorthside Meats,NM-BAC,Smoked bacon,kg,kg,,,9.80,no,0,,\nMetro Packaging,MP-BOX,Burger box,case,each,250,,42.50,no,20,,\nMetro Packaging,MP-BAG,Kraft bag,pack,each,,100,8.00,no,20,,\n","invoices":"supplier,invoice_no,invoice_date,sku,description,qty,unit,unit_price,price_includes_vat,vat_rate,line_total\nGreen Valley Produce,GV-1041,2026-11-03,GV-TOM,Vine tomatoes,20,kg,2.65,no,0,53.00\nGreen Valley Produce,GV-1041,2026-11-03,GV-ONI,Red onions,15,kg,1.10,no,0,16.50\nGreen Valley Produce,GV-1041,2026-11-03,GV-LET,Romaine lettuce,2,case,14.40,no,0,28.80\nGreen Valley Produce,GV-1052,2026-11-10,,Red onion,10,kg,1.25,no,0,12.50\nHarbor Dairy Co,HD-778,2026-11-04,HD-MLK,Whole milk 1L,3,case,13.20,no,0,39.60\nHarbor Dairy Co,HD-778,2026-11-04,HD-CHD,Cheddar slices,4,kg,11.50,no,0,51.00\nHarbor Dairy Co,HD-778,2026-11-04,HD-BTR,Butter 250g,20,each,2.35,no,0,47.00\nNorthside Meats,NM-3301,2026-11-05,NM-PAT,Beef patties 150g,2,case,57.60,no,0,115.20\nNorthside Meats,NM-3301,2026-11-05,NM-BAC,Smoked bacon,5,kg,9.80,no,0,49.00\nNorthside Meats,NM-3317,2026-11-12,NM-PAT,Beef patties 150g,2,case,57.60,no,0,115.20\nNorthside Meats,NM-3317,2026-11-12,NM-BAC,Smoked bacon,5,kg,9.80,no,0,49.00\nMetro Packaging,MP-5520,2026-11-06,MP-BOX,Burger box,1,case,51.00,yes,20,51.00\nMetro Packaging,MP-5520,2026-11-06,MP-BAG,Kraft bag,3,pack,8.00,no,20,24.00\nMetro Packaging,MP-5520,2026-11-06,MP-NAP,Napkins,2,pack,6.00,no,20,12.00\n","deliveries":"supplier,invoice_no,sku,delivered_qty,unit\nHarbor Dairy Co,HD-778,HD-MLK,30,L\nNorthside Meats,NM-3301,NM-PAT,96,each\nGreen Valley Produce,GV-1041,GV-TOM,20,kg\n","orders":"supplier,invoice_no,sku,ordered_qty,unit\nMetro Packaging,MP-5520,MP-BAG,2,pack\n","returns":"supplier,invoice_no,sku,returned_qty,unit\nGreen Valley Produce,GV-1041,GV-LET,6,each\nNorthside Meats,NM-3301,NM-BAC,1,kg\n","credits":"supplier,credit_no,invoice_no,sku,amount\nNorthside Meats,CN-88,GV-1041,NM-BAC,0\nNorthside Meats,CN-90,NM-3301,NM-BAC,5.00\n"};
+const FILES = [
+  ['priceList','Price list','supplier, sku, description, unit, base_unit, case_size, pack_size, price, price_includes_vat, vat_rate', true],
+  ['invoices','Invoices','supplier, invoice_no, invoice_date, sku, description, qty, unit, unit_price, price_includes_vat, vat_rate, line_total', true],
+  ['deliveries','Deliveries (optional)','supplier, invoice_no, sku, delivered_qty, unit'],
+  ['orders','Orders (optional)','supplier, invoice_no, sku, ordered_qty, unit'],
+  ['returns','Returns (optional)','supplier, invoice_no, sku, returned_qty, unit'],
+  ['credits','Credit notes (optional)','supplier, credit_no, invoice_no, sku, amount']
+];
+const $ = id => document.getElementById(id);
+const store = {}; let result = null; const confirmedByUser = new Set();
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function renderDrops() {
+  $('drops').innerHTML = FILES.map(([k, label, cols, req]) => `<div class="drop ${store[k] ? 'loaded' : ''}" data-k="${k}"><label for="f_${k}">${label}${req ? ' *' : ''}</label><small>${cols}</small>${DEMO ? '<span class="muted" style="font-size:13px">Import is available in the full version.</span>' : `<input type="file" id="f_${k}" accept=".csv,text/csv,.txt">`}<div class="st">${store[k] ? store[k].name + ' · ' + store[k].rows.length + ' rows' : ''}</div></div>`).join('');
+  if (!DEMO) FILES.forEach(([k]) => $('f_' + k).addEventListener('change', e => readFile(k, e.target.files[0])));
+  document.querySelectorAll('.drop').forEach(d => {
+    d.addEventListener('dragover', e => { e.preventDefault(); });
+    d.addEventListener('drop', e => { e.preventDefault(); if (!DEMO && e.dataTransfer.files[0]) readFile(d.dataset.k, e.dataTransfer.files[0]); });
+  });
+}
+function readFile(k, f) {
+  if (!f) return; const fr = new FileReader();
+  fr.onload = () => { store[k] = { name: f.name, rows: PriceLens.parseCSV(fr.result).rows }; renderDrops(); };
+  fr.readAsText(f);
+}
+function loadSample() { for (const [k, t] of Object.entries(SAMPLE)) store[k] = { name: 'sample ' + k + '.csv', rows: PriceLens.parseCSV(t).rows }; renderDrops(); run(); }
+
+function money(v) { return v == null ? '' : $('currency').value + ' ' + Number(v).toFixed(2); }
+function effective() {
+  // apply user confirmations: review items with a potential amount become confirmed
+  const issues = result.issues.map((i, idx) => confirmedByUser.has(idx) && i.potential != null ? Object.assign({}, i, { status: 'confirmed', amount: i.potential, userConfirmed: true }) : i);
+  const sup = {};
+  issues.forEach(i => { const s = sup[i.supplier] || (sup[i.supplier] = { supplier: i.supplier, confirmed: 0, review: 0, reviewPotential: 0, claimTotal: 0 });
+    if (i.status === 'confirmed') { s.confirmed++; s.claimTotal += i.amount || 0; } else if (i.status === 'review') { s.review++; s.reviewPotential += i.potential || 0; } });
+  return { issues, suppliers: Object.values(sup).sort((a, b) => b.claimTotal - a.claimTotal), currency: $('currency').value };
+}
+function run() {
+  if (!store.priceList || !store.invoices) { alert('Load at least a price list and an invoices file (or use the sample data).'); return; }
+  const data = {}; FILES.forEach(([k]) => { if (store[k]) data[k] = store[k].rows; });
+  result = PriceLens.analyze(data, { tolerancePct: +$('tol').value || 0, decimalComma: $('dc').checked, currency: $('currency').value });
+  confirmedByUser.clear(); render();
+}
+function render() {
+  const e = effective(); $('results').classList.remove('hidden');
+  const claim = e.suppliers.reduce((s, x) => s + x.claimTotal, 0), rev = e.suppliers.reduce((s, x) => s + x.reviewPotential, 0);
+  $('kClaim').textContent = money(claim); $('kRev').textContent = money(rev); $('kLines').textContent = result.totals.linesChecked; $('kIssues').textContent = e.issues.length;
+  $('supTbl').innerHTML = '<tr><th>Supplier</th><th>Confirmed issues</th><th>To review</th><th class="num">Credit to request</th><th class="num">Under review</th></tr>' +
+    e.suppliers.map(s => `<tr><td>${esc(s.supplier)}</td><td>${s.confirmed}</td><td>${s.review}</td><td class="num">${money(s.claimTotal)}</td><td class="num">${money(s.reviewPotential)}</td></tr>`).join('') || '<tr><td colspan=5>No issues found.</td></tr>';
+  const sups = [...new Set(result.issues.map(i => i.supplier))];
+  const keep = $('fSup').value; $('fSup').innerHTML = '<option value="">All suppliers</option>' + sups.map(s => `<option ${s === keep ? 'selected' : ''}>${esc(s)}</option>`).join('');
+  const ek = $('eSup').value; $('eSup').innerHTML = sups.map(s => `<option ${s === ek ? 'selected' : ''}>${esc(s)}</option>`).join('');
+  renderIssues(); renderEmail();
+}
+function renderIssues() {
+  const e = effective(), fs = $('fStatus').value, fp = $('fSup').value;
+  const rows = e.issues.map((i, idx) => [i, idx]).filter(([i]) => (!fs || i.status === fs || (fs === 'review' && i.userConfirmed)) && (!fp || i.supplier === fp));
+  $('issTbl').innerHTML = '<tr><th>Status</th><th>Issue</th><th>Supplier / invoice</th><th>Item</th><th>Details</th><th class="num">Amount</th></tr>' + rows.map(([i, idx]) => {
+    const orig = result.issues[idx]; const canConfirm = orig.status === 'review' && orig.potential != null;
+    return `<tr><td><span class="pill p-${i.status}">${i.userConfirmed ? 'confirmed by you' : i.status}</span>${canConfirm ? `<br><label style="font-size:12px"><input type="checkbox" data-i="${idx}" ${confirmedByUser.has(idx) ? 'checked' : ''}> I confirm</label>` : ''}</td><td>${esc(i.type)}</td><td>${esc(i.supplier)}<br><span class="muted">${esc(i.invoice_no)}</span></td><td>${esc(i.sku)}<br><span class="muted">${esc(i.description)}</span></td><td>${esc(i.detail)}</td><td class="num">${i.status === 'confirmed' ? money(i.amount) : (i.potential != null ? '<span class="muted">' + money(i.potential) + '</span>' : '–')}</td></tr>`;
+  }).join('');
+  document.querySelectorAll('#issTbl input[type=checkbox]').forEach(c => c.addEventListener('change', () => { c.checked ? confirmedByUser.add(+c.dataset.i) : confirmedByUser.delete(+c.dataset.i); render(); }));
+}
+function renderEmail() {
+  const s = $('eSup').value; if (!s) { $('email').value = ''; return; }
+  const txt = PriceLens.disputeEmail(effective(), s, { business: $('eBiz').value || '[Your business name]', contact: $('eName').value || '[Your name]', currency: $('currency').value });
+  $('email').value = DEMO ? (txt.split('\n').slice(0, 12).join('\n') + '\n\n[Full email drafts are in the paid version.]') : (txt || 'No confirmed issues for this supplier.');
+}
+function download(name, blob) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+function exportRows() { return effective().issues.map(i => Object.assign({}, i, { status: i.userConfirmed ? 'confirmed (by user)' : i.status })); }
+
+// ---- minimal XLSX writer (stored ZIP, no compression) ----
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return b => { let c = 0xFFFFFFFF; for (const x of b) c = t[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }; })();
+function zip(files) {
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0;
+  for (const [name, text] of files) {
+    const nb = enc.encode(name), db = enc.encode(text), crc = CRC(db);
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(8, 0, true); h.setUint32(14, crc, true); h.setUint32(18, db.length, true); h.setUint32(22, db.length, true); h.setUint16(26, nb.length, true);
+    parts.push(new Uint8Array(h.buffer), nb, db);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint32(16, crc, true); c.setUint32(20, db.length, true); c.setUint32(24, db.length, true); c.setUint16(28, nb.length, true); c.setUint32(42, off, true);
+    central.push(new Uint8Array(c.buffer), nb); off += 30 + nb.length + db.length;
+  }
+  const csize = central.reduce((s, b) => s + b.length, 0);
+  const e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...central, new Uint8Array(e.buffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+function sheetXml(rows) {
+  const x = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' + rows.map((r, ri) => '<row r="' + (ri + 1) + '">' + r.map(v => typeof v === 'number' && isFinite(v) ? '<c t="n"><v>' + v + '</v></c>' : '<c t="inlineStr"><is><t>' + x(v ?? '') + '</t></is></c>').join('') + '</row>').join('') + '</sheetData></worksheet>';
+}
+function xlsx(sheets) {
+  const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' + sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') + '</Types>';
+  const rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  const wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + sheets.map((s, i) => `<sheet name="${s[0]}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>';
+  const wbr = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') + '</Relationships>';
+  return zip([['[Content_Types].xml', ct], ['_rels/.rels', rels], ['xl/workbook.xml', wb], ['xl/_rels/workbook.xml.rels', wbr], ...sheets.map((s, i) => [`xl/worksheets/sheet${i + 1}.xml`, sheetXml(s[1])])]);
+}
+const COLS = PriceLens.ISSUE_COLS;
+function guardDemo() { if (DEMO) { alert('Export is available in the full version of PriceLens.'); return true; } return false; }
+$('csvBtn').onclick = () => { if (guardDemo()) return; download('pricelens-issues.csv', new Blob(['﻿' + PriceLens.toCSV(exportRows(), COLS)], { type: 'text/csv' })); };
+$('xlsxBtn').onclick = () => { if (guardDemo()) return; const e = effective();
+  download('pricelens-report.xlsx', xlsx([['Issues', [COLS].concat(exportRows().map(r => COLS.map(c => r[c] ?? '')))], ['Suppliers', [['supplier', 'confirmed_issues', 'to_review', 'credit_to_request', 'under_review']].concat(e.suppliers.map(s => [s.supplier, s.confirmed, s.review, Math.round(s.claimTotal * 100) / 100, Math.round(s.reviewPotential * 100) / 100]))]])); };
+$('tplBtn').onclick = () => { FILES.forEach(([k, , cols]) => download(k + '_template.csv', new Blob([cols.replace(/ /g, '') + '\r\n'], { type: 'text/csv' }))); };
+$('runBtn').onclick = run; $('sampleBtn').onclick = loadSample;
+$('clearBtn').onclick = () => { for (const k in store) delete store[k]; result = null; $('results').classList.add('hidden'); renderDrops(); };
+$('fStatus').onchange = renderIssues; $('fSup').onchange = renderIssues; $('eSup').onchange = renderEmail; $('eBiz').oninput = renderEmail; $('eName').oninput = renderEmail;
+$('currency').onchange = () => result && render(); $('tol').onchange = () => result && run(); $('dc').onchange = () => result && run();
+$('copyBtn').onclick = () => { if (DEMO) return guardDemo(); navigator.clipboard?.writeText($('email').value); };
+renderDrops(); if (DEMO) loadSample();
+</script>
+</body></html>
