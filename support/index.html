@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oddly Little Studio — Destek / Support</title>
+<style>
+:root{--ink:#1E1B2E;--cream:#F4EFE6;--coral:#FF6B4A;--lilac:#A79BFF}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.w{max-width:760px;margin:0 auto;padding:28px 16px 60px}h1{font-size:32px;margin:0}h1 span{color:var(--coral)}
+.lang{float:right}.lang button{border:1px solid #1E1B2E30;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}.lang .on{background:var(--ink);color:var(--cream)}
+input{width:100%;font:16px inherit;padding:14px;border-radius:14px;border:1px solid #1E1B2E30;margin:18px 0 8px}
+details{background:#fff;border-radius:12px;margin:8px 0;padding:12px 16px;border:1px solid #1E1B2E18}summary{font-weight:700;cursor:pointer}
+.box{background:#fff;border-radius:14px;padding:16px 18px;margin-top:22px;border-left:5px solid var(--coral)}a{color:#c2462c}.links a{display:inline-block;margin:4px 10px 4px 0}
+.none{display:none;color:#6E6A7C}
+</style></head><body><div class="w">
+<div class="lang"><button data-l="tr" class="on">TR</button> <button data-l="en">EN</button></div>
+<h1>Oddly Little Studio <span id="t-title">Destek</span></h1>
+<p id="t-sub"></p>
+<p class="links" id="links"></p>
+<input id="q" type="search">
+<div id="list"></div><p class="none" id="none"></p>
+<div class="box" id="contact"></div>
+</div>
+<script>
+const D={tr:{title:'Destek',sub:'QR Menu Kit için sık sorulan sorular. Aradığınızı yazın.',ph:'Sorununuzu yazın (örn. QR okunmuyor, fiyat değiştirme)…',none:'Sonuç yok. Aşağıdaki iletişim yolunu kullanın.',
+links:'📖 <a href="../guides/guide-tr.html">Tam rehber</a> 🎬 <a href="https://oddlylittlestudio.gumroad.com/l/qr-menu-kit">Ürün ve videolar</a> 🍽️ <a href="../">Canlı demo menü</a>',
+contact:'<b>Çözemediniz mi?</b> Gumroad satın alma makbuzu e-postanızı yanıtlayın: mesajınız doğrudan bize gelir. Ekran görüntüsü ve kullandığınız tarayıcının adını ekleyin. Satın almadan önceki sorular için Gumroad ürün sayfasındaki satıcı profilinden bize ulaşabilirsiniz.',
+qa:[['Site boş görünüyor / "menu-data.js not found"','index.html ve menu-data.js aynı klasörde olmalı. ZIP dosyasının kendisini değil, ZIP’ten çıkan klasörün içindekileri yükleyin.'],
+['Fiyatı nasıl değiştiririm?','editor.html → Menü → yeni fiyatı yazın → ZIP dışa aktar → öncekiyle aynı yere tekrar yükleyin. QR kod değişmez, yeniden basmanız gerekmez.'],
+['QR kod okunmuyor','Açık zemin üzerinde koyu QR rengi kullanın, en az 3×3 cm basın, parlak yüzey yansımasından kaçının ve adresin https:// ile başladığını kontrol edin.'],
+['QR yanlış sayfayı açıyor','QR sekmesine tam adresi yazıp QR’ı yeniden indirin. Basmadan önce iki telefonla deneyin.'],
+['Menüm editörden kayboldu','Proje aç → son .qrmenu.json yedeğinizi veya son dışa aktarımdaki project.qrmenu.json dosyasını seçin. Gizli pencere veya başka tarayıcı kullanmayın.'],
+['GitHub Pages 404 veriyor','1–2 dakika bekleyin. index.html repository’nin en üstünde olmalı. Settings → Pages: main / root seçili olmalı.'],
+['Fotoğraflar sitede görünmüyor','assets klasörünü de yükleyin. Sunucularda dosya adlarında büyük/küçük harf önemlidir.'],
+['Eski fiyatlar görünüyor','Telefon önbellekteki kopyayı gösteriyordur. Sayfayı aşağı çekip yenileyin veya birkaç dakika bekleyin.'],
+['Nereye ücretsiz yayınlarım?','Netlify Drop, GitHub Pages veya Cloudflare Pages. Adım adım anlatım rehberin 7. bölümünde.'],
+['Aylık ücret var mı?','Hayır, tek seferlik satın alma. Ücretsiz hosting planları yeterlidir (planları ilgili şirketler belirler).'],
+['Sipariş veya ödeme alınabiliyor mu?','Hayır. Kit yalnızca görüntülenen bir dijital menü üretir.'],
+['Misafir verisi toplanıyor mu?','Hayır. Form, çerez veya takip kodu yoktur.']]},
+en:{title:'Support',sub:'Frequently asked questions for QR Menu Kit. Type what you need.',ph:'Describe your problem (e.g. QR does not scan, change price)…',none:'No results. Use the contact option below.',
+links:'📖 <a href="../guides/guide-en.html">Full guide</a> 🎬 <a href="https://oddlylittlestudio.gumroad.com/l/qr-menu-kit">Product & videos</a> 🍽️ <a href="../en/">Live demo menu</a>',
+contact:'<b>Still stuck?</b> Reply to your Gumroad purchase receipt email: it reaches us directly. Add a screenshot and your browser name. For pre-sale questions, contact us via the seller profile on the Gumroad product page.',
+qa:[['Site is blank / "menu-data.js not found"','index.html and menu-data.js must be in the same folder. Upload the contents of the unzipped folder, not the ZIP file.'],
+['How do I change a price?','editor.html → Menu → type the new price → Export ZIP → upload to the same place as before. The QR stays the same; no reprint needed.'],
+['The QR code does not scan','Use a dark QR colour on a light background, print at least 3×3 cm, avoid glare, and make sure the address starts with https://.'],
+['The QR opens the wrong page','Type the exact address in the QR tab and download the QR again. Test with two phones before printing.'],
+['My menu disappeared from the editor','Open project → pick your latest .qrmenu.json backup or the project.qrmenu.json in your last export. Avoid private windows or other browsers.'],
+['GitHub Pages shows 404','Wait 1–2 minutes. index.html must be at the repo root; Settings → Pages: main / root.'],
+['Photos missing online','Upload the assets folder too. File names are case-sensitive on servers.'],
+['Old prices still show','Your phone shows a cached copy. Pull to refresh or wait a few minutes.'],
+['Where can I publish for free?','Netlify Drop, GitHub Pages or Cloudflare Pages. Step by step in section 7 of the guide.'],
+['Is there a monthly fee?','No, one-time purchase. Free hosting plans are enough (their terms are set by those companies).'],
+['Can guests order or pay?','No. The kit creates a view-only digital menu.'],
+['Does it collect guest data?','No. No forms, cookies or trackers.']]}};
+let L=(navigator.language||'').startsWith('tr')?'tr':'en';
+function render(){const d=D[L];document.documentElement.lang=L;t('t-title',d.title);t('t-sub',d.sub);document.getElementById('links').innerHTML=d.links;document.getElementById('contact').innerHTML=d.contact;none.textContent=d.none;q.placeholder=d.ph;
+list.innerHTML=d.qa.map(x=>`<details><summary>${x[0]}</summary><p>${x[1]}</p></details>`).join('');filter();document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===L))}
+function t(i,v){document.getElementById(i).textContent=v}
+function filter(){const v=q.value.toLocaleLowerCase().trim();let n=0;list.querySelectorAll('details').forEach(e=>{const ok=!v||e.innerText.toLocaleLowerCase().split(/\s+/).join(' ').includes(v)||v.split(/\s+/).every(w=>e.innerText.toLocaleLowerCase().includes(w));e.style.display=ok?'':'none';if(ok)n++;if(v&&ok)e.open=true});none.style.display=n?'none':'block'}
+const q=document.getElementById('q'),list=document.getElementById('list'),none=document.getElementById('none');q.addEventListener('input',filter);
+document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{L=b.dataset.l;render()});render();
+</script></body></html>
